@@ -4,7 +4,7 @@
 clear; clc; close all;
 
 %% set loops
-for pp      = [1:4];
+for pp      = [20:25];
 
     %% Set trig labels and epoch timings
     prestim     = -0.75;
