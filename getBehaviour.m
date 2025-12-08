@@ -4,16 +4,16 @@ clc
 
 %% set parameters and loops
 display_percentage_ok = 1;
-plot_individuals = 1;
-plot_averages = 1;
+plot_individuals = 0;
+plot_averages = 0;
 
-pp2do = [1:4];
+pp2do = [1:19];
 p = 0;
 
 bin_edges = -180:10:180;
 bin_centres = -175:10:175;
 
-subplot_size = 2;
+subplot_size = 5;
 
 for pp = pp2do
     p = p+1;
@@ -196,7 +196,22 @@ for pp = pp2do
     d_total_rt_duration(p,2) = mean(duration_data.idle_reaction_time_in_ms(long_target_trials&d_oktrials), "omitnan") + mean(duration_data.response_time_in_ms(long_target_trials&d_oktrials), "omitnan");
     
     d_error_duration(p,1) = mean(duration_data.duration_diff_abs(short_target_trials&d_oktrials), "omitnan");
-    d_error_duration(p,2) = mean(duration_data.duration_diff_abs(long_target_trials&d_oktrials), "omitnan");  
+    d_error_duration(p,2) = mean(duration_data.duration_diff_abs(long_target_trials&d_oktrials), "omitnan"); 
+
+    d_responses(p,:) = duration_data.response_time_in_ms;
+    d_responses(p, logical(1-d_oktrials)) = NaN; 
+    d_durations(p,:) = duration_data.target_duration;
+    d_durations(p, logical(1-d_oktrials)) = NaN;
+
+    d_long_responses(p,:) = duration_data.response_time_in_ms(duration_data.target_duration > 1199);
+    d_long_responses(p, logical(1-d_oktrials(duration_data.target_duration > 1199))) = NaN; 
+    d_long_durations(p,:) = duration_data.target_duration(duration_data.target_duration > 1199);
+    d_long_durations(p, logical(1-d_oktrials(duration_data.target_duration > 1199))) = NaN; 
+
+    d_short_responses(p,:) = duration_data.response_time_in_ms(duration_data.target_duration < 801);
+    d_short_responses(p, logical(1-d_oktrials(duration_data.target_duration < 801))) = NaN; 
+    d_short_durations(p,:) = duration_data.target_duration(duration_data.target_duration < 801);
+    d_short_durations(p, logical(1-d_oktrials(duration_data.target_duration < 801))) = NaN; 
 
     %% get behavioural effect as function of target duration
     % bin stimulus durations
@@ -221,6 +236,7 @@ for pp = pp2do
 
         d_dt_durations(p,i) = mean(duration_data.idle_reaction_time_in_ms(trial_sel&d_oktrials), "omitnan");
         d_rt_durations(p,i) = mean(duration_data.response_time_in_ms(trial_sel&d_oktrials), "omitnan");
+        d_rt_durations_err(p,i) = std(duration_data.response_time_in_ms(trial_sel&d_oktrials), "omitnan") ./ sum(d_oktrials);
         d_error_durations(p,i) = mean(duration_data.duration_diff_abs(trial_sel&d_oktrials), "omitnan");
     end
 end
@@ -302,6 +318,41 @@ if plot_averages
     title('DURATION - error');
     bar(duration_labels, mean(d_error_duration));
     errorbar([1:2], [mean(d_error_duration)], [std(d_error_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
+    
+    %% main confirmation that people do do duration task
+    figure(fig_nr);
+    fig_nr = fig_nr+1;
+    hold on
+    bar([1:2], mean(d_rt_duration));
+    plot([1:2], d_rt_duration);
+    errorbar([1:2], [mean(d_rt_duration)], [std(d_rt_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
+    xticks([1:2]);
+    xticklabels({"Short", "Long"});
+    xlabel("Item condition");
+    ylabel("Reproduction time (ms)");
+
+    %% check rt increase per bin per pp
+    figure(fig_nr);
+    fig_nr = fig_nr+1;
+    hold on
+    for p = size(pp2do,2)
+        plot(target_duration_bins, d_rt_durations');
+    end
+    legend;
+    xlabel('Duration - binned (ms)');
+    ylabel('Average responded duration (ms)');
+
+    %% check rt increase per bin overall
+    figure(fig_nr);
+    fig_nr = fig_nr+1;
+    hold on
+    plot(target_duration_bins, mean(d_rt_durations));
+    errorbar(target_duration_bins, mean(d_rt_durations), std(d_rt_durations), 'LineStyle', 'none');
+    plot([0:1800], [0:1800]);
+    xlim([0, 1800]);
+    ylim([0, 1800]);
+    xlabel('Duration - binned (ms)');
+    ylabel('Average responded duration (ms)');
 
     %% investigate push-pull effect between the two items
     figure(fig_nr);
@@ -314,5 +365,10 @@ if plot_averages
     ylabel('Mean response error (°)');
     xlim([bin_centres(1), bin_centres(end)]);
     ylim([-15, 15]);
+
+    %% do regression stats per pp
+    % [~,~,~,~,stats] = regress(d_long_responses',[d_long_durations',ones(200,1)])
+    % [~,~,~,~,stats] = regress(d_long_responses',[d_long_durations',ones(400,1)])
+
 
 end
