@@ -17,7 +17,7 @@ xlimtoplot      = [-250 1500];
 
 %% visual parameters
 % todo
-subplot_size = 2;
+subplot_size = 5;
 
 %% load and aggregate the data from all pp
 s = 0;
@@ -74,7 +74,7 @@ if plotSinglePps
         plot(saccade.time, squeeze(d2(sp,1,:)));
         plot(xlim, [0,0], '--k');
         xlim(xlimtoplot);
-        % ylim([-0.5 0.5]);
+        ylim([-0.5 0.5]);
         title(pp2do(sp));
     end
     legend({'all colour'});
@@ -87,7 +87,7 @@ if plotSinglePps
         plot(saccade.time, squeeze(d2(sp,6,:)));
         plot(xlim, [0,0], '--k');
         xlim(xlimtoplot);
-        % ylim([-0.5 0.5]);
+        ylim([-0.5 0.5]);
         title(pp2do(sp));
     end
     legend({'all duration'});
@@ -99,7 +99,7 @@ if plotSinglePps
         plot(saccade.time, squeeze(d3(sp,1,:)));
         plot(xlim, [0,0], '--k');
         xlim(xlimtoplot);
-        % ylim([-0.5 0.5]);
+        ylim([-0.5 0.5]);
         title(pp2do(sp));
     end
     legend({'all colour'});
@@ -111,7 +111,7 @@ if plotSinglePps
         plot(saccade.time, squeeze(d3(sp,6,:)));
         plot(xlim, [0,0], '--k');
         xlim(xlimtoplot);
-        % ylim([-0.5 0.5]);
+        ylim([-0.5 0.5]);
         title(pp2do(sp));
     end
     legend({'all duration'});
@@ -210,7 +210,7 @@ if plotGAs
     cfg = [];
     cfg.parameter = 'effect';
     cfg.figure = 'gcf';
-    cfg.zlim = 'maxabs';
+    cfg.zlim = [-0.07, 0.07];
     cfg.xlim = xlimtoplot;  
     cfg.colormap = 'jet';
     c = 0;
