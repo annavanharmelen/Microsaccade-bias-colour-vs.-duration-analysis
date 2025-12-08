@@ -116,6 +116,19 @@ if plotSinglePps
     end
     legend({'all duration'});
 
+    % toward vs away - all colour AND all duration
+    figure;
+    for sp = 1:s
+        subplot(subplot_size,subplot_size,sp); hold on;
+        plot(saccade.time, squeeze(d3(sp,1,:)));
+        plot(saccade.time, squeeze(d3(sp,6,:)));
+        plot(xlim, [0,0], '--k');
+        xlim(xlimtoplot);
+        ylim([-0.5 0.5]);
+        title(pp2do(sp));
+    end
+    legend({'all colour', 'all duration'});
+
     % towardness for all conditions in colour
     figure;
     for sp = 1:s
