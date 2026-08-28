@@ -261,3 +261,167 @@ if plotGAs
     end
   
 end
+
+%% Plot main figure for paper
+if plotFigures
+    
+    %% first determine significance 
+    statcfg.xax = saccade.time;
+    statcfg.npermutations = 10000;
+    statcfg.clusterStatEvalaluationAlpha = 0.05;
+    statcfg.nsub = size(pp2do,2);
+    statcfg.statMethod = 'montecarlo';
+    
+    timeframe = [701:1701]; %this is 0 to 1500 ms post-cue
+    
+    colour_data = d3(:,1,timeframe);
+    duration_data = d3(:,6,timeframe);
+    null_data = zeros(size(colour_data));
+    
+    stat_colour = frevede_ftclusterstat1D(statcfg, colour_data, null_data)
+    stat_duration = frevede_ftclusterstat1D(statcfg, duration_data, null_data)
+    stat_compare = frevede_ftclusterstat1D(statcfg, colour_data, duration_data)
+    
+    colour_mask = double(stat_colour.mask);
+    colour_mask(colour_mask==0) = nan;
+
+    duration_mask = double(stat_duration.mask);
+    duration_mask (duration_mask ==0) = nan;
+
+    compare_mask = double(stat_compare.mask);
+    compare_mask(compare_mask==0) = nan;
+    
+    %% make figure
+    % settings for plots
+    line = 2;
+    fontsize = 17;
+    x_ticks = [0, 500, 1000];
+    y_ticks_rates = [0, 0.25, 0.5, 0.75];
+    ylim_rates = [0, 0.75];
+    y_ticks_effects = [0, 0.1, 0.2, 0.3];
+    ylim_effects = [-0.1, 0.3];
+    sig_offset_colour = -0.05;
+    sig_offset_compare = -0.075;
+    
+    cfg = [];
+    cfg.parameter = 'effect';
+    cfg.figure = 'gcf';
+    cfg.zlim = [-0.075, 0.075];
+    cfg.xlim = xlimtoplot;  
+    cfg.colormap = brewermap(1000, 'RdBu');
+
+    % make actual figure ✨
+    figure;
+
+    tL = subplot(2,3,1);
+    hold on
+    p1 = frevede_errorbarplot(saccade.time, squeeze(d1(:,1,:)), get_colour("blue", ""), 'se');
+    p2 = frevede_errorbarplot(saccade.time, squeeze(d2(:,1,:)), get_colour("red", ""), 'se');
+    p1.LineWidth = line;
+    p2.LineWidth = line;
+    legend([p1, p2], {'toward', 'away'}, 'EdgeColor','none', 'AutoUpdate','off', 'FontSize', 17);
+    xline(0, 'LineWidth', line, 'Color',[107, 107, 107]/255, 'LineStyle','--');
+    ylim(ylim_rates);
+    xlim(xlimtoplot);
+    xticks(x_ticks);
+    yticks(y_ticks_rates);
+    ylabel('Saccade rate (Hz)');
+    hold off
+
+    tM = subplot(2,3,2);
+    hold on
+    p1 = frevede_errorbarplot(saccade.time, squeeze(d1(:,6,:)), get_colour("blue", ""), 'se');
+    p2 = frevede_errorbarplot(saccade.time, squeeze(d2(:,6,:)), get_colour("red", ""), 'se');
+    p1.LineWidth = line;
+    p2.LineWidth = line;
+    legend([p1, p2], {'toward', 'away'}, 'EdgeColor','none', 'AutoUpdate','off', 'FontSize', fontsize);
+    xline(0, 'LineWidth', line, 'Color',[107, 107, 107]/255, 'LineStyle','--');
+    ylim(ylim_rates);
+    xlim(xlimtoplot);
+    xticks(x_ticks);
+    yticks(y_ticks_rates);
+    ylabel('Saccade rate (Hz)');
+    hold off
+
+    tR = subplot(2,3,3);
+    hold on
+    p1 = frevede_errorbarplot(saccade.time, squeeze(d3(:,1,:)), get_colour("pink", ""), 'se');
+    p2 = frevede_errorbarplot(saccade.time, squeeze(d3(:,6,:)), get_colour("green", ""), 'se');
+    p1.LineWidth = line;
+    p2.LineWidth = line;
+    legend([p1, p2], {'colour', 'duration'}, 'EdgeColor','none', 'AutoUpdate','off', 'FontSize', fontsize);
+    plot(saccade.time(timeframe), colour_mask*sig_offset_colour, 'Color', get_colour("pink", ""), 'LineWidth', 3);
+    plot(saccade.time(timeframe), compare_mask*sig_offset_compare, 'Color', 'k', 'LineWidth', 3);
+    xline(0, 'LineWidth', line, 'Color',[107, 107, 107]/255, 'LineStyle','--');
+    yline(0, 'LineWidth', line, 'Color',[107, 107, 107]/255, 'LineStyle','--');
+    ylim(ylim_effects);
+    xlim(xlimtoplot);
+    xticks(x_ticks);
+    yticks(y_ticks_effects);
+    ylabel('Saccade bias (Hz)');
+    hold off
+
+    bL = subplot(2,3,4);
+    hold on
+    cfg.channel = 1;
+    ft_singleplotTFR(cfg, saccadesize);
+    % yline(6-4/2, 'LineWidth',2, 'Color',[107, 107, 107]/255, 'LineStyle','--');
+    xline(0, 'LineWidth',2, 'Color',[107, 107, 107]/255, 'LineStyle','--');
+    xticks(x_ticks);
+    ylim([0.25, 6]);
+    ylabel('Saccade size (degrees)');
+    title([]);
+    colorbar('off');
+    xline(-100, 'LineWidth', 1, 'Color', [0,0,0], 'Alpha', 1);
+    xline(1000, 'LineWidth', 0.7, 'Color', [0,0,0], 'Alpha', 1);
+    yline(0.25, 'LineWidth', 1, 'Color', [0,0,0], 'Alpha', 1);
+    yline(6.0, 'LineWidth', 1, 'Color', [0,0,0], 'Alpha', 1);
+    plot([0,0], [0.25, 0.32], 'LineWidth', 1, 'Color', [0,0,0]);
+    plot([500,500], [0.25, 0.32], 'LineWidth', 1, 'Color', [0,0,0]);
+    plot([0,0], [5.93, 6.0], 'LineWidth', 1, 'Color', [0,0,0]);
+    plot([500,500], [5.93, 6.0], 'LineWidth', 1, 'Color', [0,0,0]);
+
+
+    bM = subplot(2,3,5);
+    hold on
+    cfg.channel = 6;
+    ft_singleplotTFR(cfg, saccadesize);
+    % yline(6-4/2, 'LineWidth',2, 'Color',[107, 107, 107]/255, 'LineStyle','--');
+    xline(0, 'LineWidth',2, 'Color',[107, 107, 107]/255, 'LineStyle','--');
+    xticks(x_ticks);
+    ylim([0.25, 6]);
+    ylabel('Saccade size (degrees)');
+    title([]);
+    c = colorbar();
+    c.Position = [0.667 0.21 0.012 0.11];
+    c.Ticks = [-0.05, 0, 0.05];
+    xline(-100, 'LineWidth', 1, 'Color', [0,0,0], 'Alpha', 1);
+    xline(1000, 'LineWidth', 0.7, 'Color', [0,0,0], 'Alpha', 1);
+    yline(0.25, 'LineWidth', 1, 'Color', [0,0,0], 'Alpha', 1);
+    yline(6.0, 'LineWidth', 1, 'Color', [0,0,0], 'Alpha', 1);
+    plot([0,0], [0.25, 0.32], 'LineWidth', 1, 'Color', [0,0,0]);
+    plot([500,500], [0.25, 0.32], 'LineWidth', 1, 'Color', [0,0,0]);
+    plot([0,0], [5.93, 6.0], 'LineWidth', 1, 'Color', [0,0,0]);
+    plot([500,500], [5.93, 6.0], 'LineWidth', 1, 'Color', [0,0,0]);
+
+    % general formatting
+    set(gcf(), 'Position', [500 200 1500 1000]);
+    axes = {tL, tM, tR, bL, bM};
+    for i = 1:size(axes,2)
+        xlabel(axes{i}, 'Time after cue onset (ms)', 'FontName', 'Aptos');
+        set(axes{i}, 'Box', 'on');
+        axis(axes{i}, "square");
+        set(axes{i}, 'FontSize', fontsize);
+        set(axes{i}, 'FontName', 'Aptos');
+        set(axes{i}, 'LineWidth', 1);
+        
+    end
+    % move bottom figures up
+    set(bL, 'Position', [0.1311, 0.1700, 0.2073, 0.3412]);
+    set(bM, 'Position', [0.4119, 0.1700, 0.2073, 0.3412]);
+    
+    set(gcf, 'Renderer', 'Painters');
+
+    print("..\..\..\..\Manuscripts\colour-vs.-duration\Figures\Saccade", "-dsvg", "-vector")
+    print("..\..\..\..\Manuscripts\colour-vs.-duration\Figures\Saccade", "-dpng")
+end
