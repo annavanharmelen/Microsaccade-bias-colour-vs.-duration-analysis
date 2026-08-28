@@ -10,10 +10,8 @@ oneOrTwoD_options = {'_1D','_2D'};
 
 pp2do           = [2:25];
 
-nsmooth         = 500;
-plotSinglePps   = 1;
-plotGAs         = 1;
-xlimtoplot      = [-250 1500];
+nsmooth         = 200;
+plotSinglePps   = 0;
 
 %% visual parameters
 % todo
