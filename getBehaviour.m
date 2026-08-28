@@ -7,7 +7,7 @@ display_percentage_ok = 1;
 plot_individuals = 0;
 plot_averages = 0;
 
-pp2do = [1:19];
+pp2do = [2:25];
 p = 0;
 
 bin_edges = -180:10:180;
@@ -31,6 +31,9 @@ for pp = pp2do
     % select trials with reasonable decision times from both datasets
     c_oktrials = abs(zscore(colour_data.idle_reaction_time_in_ms))<=3;
     d_oktrials = abs(zscore(duration_data.idle_reaction_time_in_ms))<=3;
+
+    d_too_long_responses(p,1) = sum(abs(zscore(duration_data.response_time_in_ms))>=3);
+    d_too_long_responses_which{p,1} = duration_data.response_time_in_ms(abs(zscore(duration_data.response_time_in_ms))>=3);
 
     % display both data types per person together
     percentageok(p,1) = mean([mean(c_oktrials), mean(d_oktrials)])*100;
@@ -120,6 +123,13 @@ for pp = pp2do
     c_overall_total_rt(p,1) = mean(colour_data.idle_reaction_time_in_ms(c_oktrials), "omitnan") + mean(colour_data.response_time_in_ms(c_oktrials), "omitnan");
     c_overall_abs_error(p,1) = mean(colour_data.abs_rgb_distance(c_oktrials), "omitnan");
     c_overall_error_signed(p,1) = mean(colour_data.rgb_distance_signed(c_oktrials), "omitnan");
+    c_errors_all{p} = colour_data.rgb_distance_signed(c_oktrials);
+
+    c_average_of_both(p,1) = mean(mean(str2double(split(erase(erase(colour_data.stimuli_colours, ["[[", ", 0.2, 0.5]", " [", ", 0.2, 0.5]]"]), "]"), ",")), 2));
+    temp = str2double(split(erase(erase(colour_data.stimuli_colours, ["[[", ", 0.2, 0.5]", " [", ", 0.2, 0.5]]"]), "]"), ","));
+    temp = abs(temp(:,1) - temp(:,2));
+    temp(temp > 180) = 360 - temp(temp > 180);
+    c_difference_between_both(p,1) = mean(temp);
     
     % get behavioural data as function of target_order
     order_labels = {'cue1', 'cue2'};
@@ -171,6 +181,11 @@ for pp = pp2do
     d_overall_total_rt(p,1) = mean(duration_data.idle_reaction_time_in_ms(d_oktrials), "omitnan") + mean(duration_data.response_time_in_ms(d_oktrials), "omitnan");
     d_overall_abs_error(p,1) = mean(duration_data.duration_diff_abs(d_oktrials), "omitnan");
     d_overall_error_signed(p,1) = mean(duration_data.duration_offset(d_oktrials), "omitnan");
+    d_errors_all{p} = duration_data.duration_offset(d_oktrials);
+
+    d_average_of_both(p,1) = mean(mean(str2double(split(erase(duration_data.durations, ["["," ","]"]), ",")), 2));
+    temp = str2double(split(erase(duration_data.durations, ["["," ","]"]), ","));
+    d_difference_between_both(p,1) = mean(abs(temp(:,1) - temp(:,2)));
     
     % get behavioural data as function of target_order    
     d_dt_order(p,1) = mean(duration_data.idle_reaction_time_in_ms(first_target_trials&d_oktrials), "omitnan");
@@ -369,6 +384,36 @@ if plot_averages
     %% do regression stats per pp
     % [~,~,~,~,stats] = regress(d_long_responses',[d_long_durations',ones(200,1)])
     % [~,~,~,~,stats] = regress(d_long_responses',[d_long_durations',ones(400,1)])
+
+    %% responses per task: colour vs. duration
+    colour_errors = vertcat(c_errors_all{:});
+    duration_errors = vertcat(d_errors_all{:});
+
+    figure;
+    subplot(1,2,1)
+    ksdensity(colour_errors)
+    xlim([-100, 100]);
+    ylim([0, 0.03]);
+    title('Colour');
+    subplot(1,2,2)
+    ksdensity(duration_errors)
+    xlim([-2000, 2000]);
+    ylim([0, 0.0015]);
+    title('Duration');
+
+    figure;
+    ksdensity(duration_errors);
+
+    %% stats
+    mean(c_overall_abs_error)
+    std(c_overall_abs_error)
+    [h,p,ci,stats] = ttest(c_overall_abs_error, c_difference_between_both)
+    meanEffectSize(c_overall_abs_error, c_difference_between_both, effect="cohen")
+
+    mean(d_overall_abs_error)
+    std(d_overall_abs_error)
+    [h,p,ci,stats] = ttest(d_overall_abs_error, d_difference_between_both)
+    meanEffectSize(d_overall_abs_error, d_difference_between_both, effect="cohen")
 
 
 end
