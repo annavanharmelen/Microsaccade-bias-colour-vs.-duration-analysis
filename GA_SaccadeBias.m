@@ -12,6 +12,12 @@ pp2do           = [2:25];
 
 nsmooth         = 200;
 plotSinglePps   = 0;
+plotGAs         = 0;
+plotFigures     = 0;
+xlimtoplot      = [-100 1000];
+
+pp_start_colour   = logical([1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]); 
+pp_start_duration = logical([0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]); 
 
 %% visual parameters
 % todo
@@ -170,7 +176,7 @@ if plotGAs
     p1 = frevede_errorbarplot(saccade.time, squeeze(d1(:,1,:)), 'b', 'se');
     p2 = frevede_errorbarplot(saccade.time, squeeze(d2(:,1,:)), 'r', 'se');
     legend([p1, p2], {'toward', 'away'});
-    ylim([0, 2]);
+    ylim([0, 0.8]);
     xlim(xlimtoplot);
     ylabel('Rate (Hz)');
     xlabel('Time (ms)');
@@ -183,7 +189,7 @@ if plotGAs
     p3 = frevede_errorbarplot(saccade.time, squeeze(d1(:,6,:)), 'b', 'se');
     p4 = frevede_errorbarplot(saccade.time, squeeze(d2(:,6,:)), 'r', 'se');
     legend([p3, p4], {'toward', 'away'});
-    ylim([0, 2]);
+    ylim([0, 0.8]);
     xlim(xlimtoplot);
     ylabel('Rate (Hz)');
     xlabel('Time (ms)');
@@ -203,7 +209,34 @@ if plotGAs
     xlabel('Time (ms)');
     title('Colour effect vs. duration effect')
     hold off
-    
+
+    %% saccade effect split by start task
+    figure;
+    subplot(1,2,1)
+    hold on
+    p5 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_colour(pp2do),1,:)), 'b', 'se');
+    p6 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_colour(pp2do),6,:)), 'k', 'se');
+    xlim(xlimtoplot);
+    plot(xlim, [0,0], '--', 'Color', [0.6, 0.6, 0.6]);
+    plot([0,0], ylim, '--', 'Color', [0.6, 0.6, 0.6]);
+    legend([p5, p6], {'colour', 'duration'});
+    ylabel('Rate (Hz)');
+    xlabel('Time (ms)');
+    title('Colour effect vs. duration effect (START colour)')
+    hold off
+
+    subplot(1,2,2)
+    hold on
+    p5 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_duration(pp2do),1,:)), 'b', 'se');
+    p6 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_duration(pp2do),6,:)), 'k', 'se');
+    xlim(xlimtoplot);
+    plot(xlim, [0,0], '--', 'Color', [0.6, 0.6, 0.6]);
+    plot([0,0], ylim, '--', 'Color', [0.6, 0.6, 0.6]);
+    legend([p5, p6], {'colour', 'duration'});
+    ylabel('Rate (Hz)');
+    xlabel('Time (ms)');
+    title('Colour effect vs. duration effect (START duration)')
+    hold off
     %% just effect as function of saccade size
     cfg = [];
     cfg.parameter = 'effect';
