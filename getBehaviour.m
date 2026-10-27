@@ -4,16 +4,16 @@ clc
 
 %% set parameters and loops
 display_percentage_ok = 1;
-plot_individuals = 0;
-plot_averages = 0;
+plot_individuals = 1;
+plot_averages = 1;
 
-pp2do = [2:25];
+pp2do = [1];
 p = 0;
 
 bin_edges = -180:10:180;
 bin_centres = -175:10:175;
 
-subplot_size = 5;
+subplot_size = 1;
 
 for pp = pp2do
     p = p+1;
@@ -29,63 +29,17 @@ for pp = pp2do
 
     %% check percentage oktrials
     % select trials with reasonable decision times from both datasets
-    c_oktrials = abs(zscore(colour_data.idle_reaction_time_in_ms))<=3;
-    d_oktrials = abs(zscore(duration_data.idle_reaction_time_in_ms))<=3;
-
-    d_too_long_responses(p,1) = sum(abs(zscore(duration_data.response_time_in_ms))>=3);
-    d_too_long_responses_which{p,1} = duration_data.response_time_in_ms(abs(zscore(duration_data.response_time_in_ms))>=3);
+    c_oktrials = abs(zscore(colour_data.reaction_time_in_ms))<=3;
+    d_oktrials = abs(zscore(duration_data.reaction_time_in_ms))<=3;
 
     % display both data types per person together
     percentageok(p,1) = mean([mean(c_oktrials), mean(d_oktrials)])*100;
+    percentageok(p,2) = mean(c_oktrials)*100;
+    percentageok(p,3) = mean(d_oktrials)*100;
   
     % display percentage unbroken trials
     if display_percentage_ok
-        fprintf('%s has %.2f%% OK trials\n\n', param.subjName, percentageok(p,1))
-    end
-    %% basic data checks, each pp in own subplot
-    if plot_individuals
-        figure(fig_nr);
-        fig_nr = fig_nr+1;
-        subplot(subplot_size,subplot_size,p);
-        h = histogram(colour_data.idle_reaction_time_in_ms,50);
-        title(['decision time - colour pp', num2str(pp2do(p))]);
-        ylim([0 200]);
-
-        figure(fig_nr);
-        fig_nr = fig_nr+1;
-        subplot(subplot_size,subplot_size,p);
-        h = histogram(duration_data.idle_reaction_time_in_ms,50);
-        title(['decision time - duration pp', num2str(pp2do(p))]);
-        ylim([0 200]);
-
-        figure(fig_nr);
-        fig_nr = fig_nr+1;
-        subplot(subplot_size,subplot_size,p);
-        h = histogram(colour_data.response_time_in_ms, 50);
-        title(['response time - colour pp', num2str(pp2do(p))]);
-        xlim([0 5010]);
-        ylim([0 150]);
-
-        figure(fig_nr);
-        fig_nr = fig_nr+1;
-        subplot(subplot_size,subplot_size,p);
-        h = histogram(duration_data.response_time_in_ms, 50);
-        title(['response time - duration pp', num2str(pp2do(p))]);
-        xlim([0 5010]);
-        ylim([0 150]);
-        
-        figure(fig_nr);
-        fig_nr = fig_nr+1;
-        subplot(subplot_size,subplot_size,p);
-        h = histogram(colour_data.abs_rgb_distance,50);       
-        title(['colour error abs - pp', num2str(pp2do(p))]);
-
-        
-        figure(fig_nr);
-        fig_nr = fig_nr+1;
-        subplot(subplot_size,subplot_size,p);
-        h = histogram(duration_data.duration_diff_abs,50);     
-        title(['duration error abs - pp', num2str(pp2do(p))]);
+        fprintf('%s has %.2f%% OK colour trials and %.2f%% OK duration trials\n\n', param.subjName, percentageok(p,2), percentageok(p,3))
     end
 
     %% %%%% COLOUR DATA EXTRACTION %%%%
@@ -102,28 +56,12 @@ for pp = pp2do
 
     premature_trials = ismember(colour_data.premature_pressed, {'True'});
 
-    %% get pushpull necessary data
     target_colours = str2double(erase(colour_data.target_colour,["[", ", 0.2, 0.5]"]));
     distractor_colours = str2double(erase(colour_data.distractor_colour,["[", ", 0.2, 0.5]"]));
-    response_colours = str2double(erase(colour_data.selected_colour,["[", ", 0.2, 0.5]"]));
 
-    target_colour_diff = (mod(distractor_colours - target_colours + 180, 360) - 180)';
-    response_colour_diff = (mod(response_colours - target_colours + 180, 360) - 180)';
-
-    % bin data to save
-    [target_colour_diff_binned(p,:),~,bin] = histcounts(target_colour_diff, bin_edges);
-    response_colour_diff_binned(p,:) = accumarray(bin', response_colour_diff', [size(bin_centres,2) 1], @mean);
-
-    % also get colour responses clustered
-    colour_responses(p,:) = histcounts(str2double(erase(colour_data.selected_colour,["[", ", 0.2, 0.5]"])), 360);
-    
     %% extract data of interest
-    c_overall_dt(p,1) = mean(colour_data.idle_reaction_time_in_ms(c_oktrials), "omitnan");
-    c_overall_rt(p,1) = mean(colour_data.response_time_in_ms(c_oktrials), "omitnan");
-    c_overall_total_rt(p,1) = mean(colour_data.idle_reaction_time_in_ms(c_oktrials), "omitnan") + mean(colour_data.response_time_in_ms(c_oktrials), "omitnan");
-    c_overall_abs_error(p,1) = mean(colour_data.abs_rgb_distance(c_oktrials), "omitnan");
-    c_overall_error_signed(p,1) = mean(colour_data.rgb_distance_signed(c_oktrials), "omitnan");
-    c_errors_all{p} = colour_data.rgb_distance_signed(c_oktrials);
+    c_overall_rt(p,1) = mean(colour_data.reaction_time_in_ms(c_oktrials), "omitnan"); 
+    c_accuracy(p,1) = sum(colour_data.correct_response(c_oktrials) == "True")/size(colour_data(c_oktrials,:),1);
 
     c_average_of_both(p,1) = mean(mean(str2double(split(erase(erase(colour_data.stimuli_colours, ["[[", ", 0.2, 0.5]", " [", ", 0.2, 0.5]]"]), "]"), ",")), 2));
     temp = str2double(split(erase(erase(colour_data.stimuli_colours, ["[[", ", 0.2, 0.5]", " [", ", 0.2, 0.5]]"]), "]"), ","));
@@ -134,32 +72,20 @@ for pp = pp2do
     % get behavioural data as function of target_order
     order_labels = {'cue1', 'cue2'};
     
-    c_dt_order(p,1) = mean(colour_data.idle_reaction_time_in_ms(first_target_trials&c_oktrials), "omitnan");
-    c_dt_order(p,2) = mean(colour_data.idle_reaction_time_in_ms(second_target_trials&c_oktrials), "omitnan");
+    c_rt_order(p,1) = mean(colour_data.reaction_time_in_ms(first_target_trials&c_oktrials), "omitnan");
+    c_rt_order(p,2) = mean(colour_data.reaction_time_in_ms(second_target_trials&c_oktrials), "omitnan");
     
-    c_rt_order(p,1) = mean(colour_data.response_time_in_ms(first_target_trials&c_oktrials), "omitnan");
-    c_rt_order(p,2) = mean(colour_data.response_time_in_ms(second_target_trials&c_oktrials), "omitnan");
-    
-    c_total_rt_order(p,1) = mean(colour_data.idle_reaction_time_in_ms(first_target_trials&c_oktrials), "omitnan") + mean(colour_data.response_time_in_ms(first_target_trials&c_oktrials), "omitnan");
-    c_total_rt_order(p,2) = mean(colour_data.idle_reaction_time_in_ms(second_target_trials&c_oktrials), "omitnan") + mean(colour_data.response_time_in_ms(second_target_trials&c_oktrials), "omitnan");
-    
-    c_error_order(p,1) = mean(colour_data.abs_rgb_distance(first_target_trials&c_oktrials), "omitnan");
-    c_error_order(p,2) = mean(colour_data.abs_rgb_distance(second_target_trials&c_oktrials), "omitnan");
+    c_accuracy_order(p,1) = sum(colour_data.correct_response(first_target_trials&c_oktrials) == "True")/size(colour_data(first_target_trials&c_oktrials,:),1);
+    c_accuracy_order(p,2) = sum(colour_data.correct_response(second_target_trials&c_oktrials) == "True")/size(colour_data(second_target_trials&c_oktrials,:),1);
     
     % get behavioural data as function of target duration
     duration_labels = {'short', 'long'};
 
-    c_dt_duration(p,1) = mean(colour_data.idle_reaction_time_in_ms(short_target_trials&c_oktrials), "omitnan");
-    c_dt_duration(p,2) = mean(colour_data.idle_reaction_time_in_ms(long_target_trials&c_oktrials), "omitnan");
+    c_rt_duration(p,1) = mean(colour_data.reaction_time_in_ms(short_target_trials&c_oktrials), "omitnan");
+    c_rt_duration(p,2) = mean(colour_data.reaction_time_in_ms(long_target_trials&c_oktrials), "omitnan");
     
-    c_rt_duration(p,1) = mean(colour_data.response_time_in_ms(short_target_trials&c_oktrials), "omitnan");
-    c_rt_duration(p,2) = mean(colour_data.response_time_in_ms(long_target_trials&c_oktrials), "omitnan");
-    
-    c_total_rt_duration(p,1) = mean(colour_data.idle_reaction_time_in_ms(short_target_trials&c_oktrials), "omitnan") + mean(colour_data.response_time_in_ms(short_target_trials&c_oktrials), "omitnan");
-    c_total_rt_duration(p,2) = mean(colour_data.idle_reaction_time_in_ms(long_target_trials&c_oktrials), "omitnan") + mean(colour_data.response_time_in_ms(long_target_trials&c_oktrials), "omitnan");
-    
-    c_error_duration(p,1) = mean(colour_data.abs_rgb_distance(short_target_trials&c_oktrials), "omitnan");
-    c_error_duration(p,2) = mean(colour_data.abs_rgb_distance(long_target_trials&c_oktrials), "omitnan");
+    c_accuracy_duration(p,1) = sum(colour_data.correct_response(short_target_trials&c_oktrials) == "True")/size(colour_data(short_target_trials&c_oktrials,:),1);
+    c_accuracy_duration(p,2) = sum(colour_data.correct_response(long_target_trials&c_oktrials) == "True")/size(colour_data(long_target_trials&c_oktrials,:),1);
 
     %% %%%% DURATION DATA EXTRACTION %%%%
 
@@ -176,57 +102,56 @@ for pp = pp2do
     premature_trials = ismember(duration_data.premature_pressed, {'True'});
 
     %% extract data of interest
-    d_overall_dt(p,1) = mean(duration_data.idle_reaction_time_in_ms(d_oktrials), "omitnan");
-    d_overall_rt(p,1) = mean(duration_data.response_time_in_ms(d_oktrials), "omitnan");
-    d_overall_total_rt(p,1) = mean(duration_data.idle_reaction_time_in_ms(d_oktrials), "omitnan") + mean(duration_data.response_time_in_ms(d_oktrials), "omitnan");
-    d_overall_abs_error(p,1) = mean(duration_data.duration_diff_abs(d_oktrials), "omitnan");
-    d_overall_error_signed(p,1) = mean(duration_data.duration_offset(d_oktrials), "omitnan");
-    d_errors_all{p} = duration_data.duration_offset(d_oktrials);
-
+    d_overall_rt(p,1) = mean(duration_data.reaction_time_in_ms(d_oktrials), "omitnan");
+    d_accuracy(p,1) = sum(duration_data.correct_response(d_oktrials) == "True")/size(duration_data(d_oktrials,:),1);
+    
     d_average_of_both(p,1) = mean(mean(str2double(split(erase(duration_data.durations, ["["," ","]"]), ",")), 2));
     temp = str2double(split(erase(duration_data.durations, ["["," ","]"]), ","));
     d_difference_between_both(p,1) = mean(abs(temp(:,1) - temp(:,2)));
     
     % get behavioural data as function of target_order    
-    d_dt_order(p,1) = mean(duration_data.idle_reaction_time_in_ms(first_target_trials&d_oktrials), "omitnan");
-    d_dt_order(p,2) = mean(duration_data.idle_reaction_time_in_ms(second_target_trials&d_oktrials), "omitnan");
+    d_rt_order(p,1) = mean(duration_data.reaction_time_in_ms(first_target_trials&d_oktrials), "omitnan");
+    d_rt_order(p,2) = mean(duration_data.reaction_time_in_ms(second_target_trials&d_oktrials), "omitnan");
     
-    d_rt_order(p,1) = mean(duration_data.response_time_in_ms(first_target_trials&d_oktrials), "omitnan");
-    d_rt_order(p,2) = mean(duration_data.response_time_in_ms(second_target_trials&d_oktrials), "omitnan");
-    
-    d_total_rt_order(p,1) = mean(duration_data.idle_reaction_time_in_ms(first_target_trials&d_oktrials), "omitnan") + mean(duration_data.response_time_in_ms(first_target_trials&d_oktrials), "omitnan");
-    d_total_rt_order(p,2) = mean(duration_data.idle_reaction_time_in_ms(second_target_trials&d_oktrials), "omitnan") + mean(duration_data.response_time_in_ms(second_target_trials&d_oktrials), "omitnan");
-    
-    d_error_order(p,1) = mean(duration_data.duration_diff_abs(first_target_trials&d_oktrials), "omitnan");
-    d_error_order(p,2) = mean(duration_data.duration_diff_abs(second_target_trials&d_oktrials), "omitnan");
+    d_accuracy_order(p,1) = sum(duration_data.correct_response(first_target_trials&d_oktrials) == "True")/size(duration_data(first_target_trials&d_oktrials,:),1);
+    d_accuracy_order(p,2) = sum(duration_data.correct_response(second_target_trials&d_oktrials) == "True")/size(duration_data(second_target_trials&d_oktrials,:),1);
     
     % get behavioural data as function of target duration
-    d_dt_duration(p,1) = mean(duration_data.idle_reaction_time_in_ms(short_target_trials&d_oktrials), "omitnan");
-    d_dt_duration(p,2) = mean(duration_data.idle_reaction_time_in_ms(long_target_trials&d_oktrials), "omitnan");
+    d_rt_duration(p,1) = mean(duration_data.reaction_time_in_ms(short_target_trials&d_oktrials), "omitnan");
+    d_rt_duration(p,2) = mean(duration_data.reaction_time_in_ms(long_target_trials&d_oktrials), "omitnan");
     
-    d_rt_duration(p,1) = mean(duration_data.response_time_in_ms(short_target_trials&d_oktrials), "omitnan");
-    d_rt_duration(p,2) = mean(duration_data.response_time_in_ms(long_target_trials&d_oktrials), "omitnan");
-    
-    d_total_rt_duration(p,1) = mean(duration_data.idle_reaction_time_in_ms(short_target_trials&d_oktrials), "omitnan") + mean(duration_data.response_time_in_ms(short_target_trials&d_oktrials), "omitnan");
-    d_total_rt_duration(p,2) = mean(duration_data.idle_reaction_time_in_ms(long_target_trials&d_oktrials), "omitnan") + mean(duration_data.response_time_in_ms(long_target_trials&d_oktrials), "omitnan");
-    
-    d_error_duration(p,1) = mean(duration_data.duration_diff_abs(short_target_trials&d_oktrials), "omitnan");
-    d_error_duration(p,2) = mean(duration_data.duration_diff_abs(long_target_trials&d_oktrials), "omitnan"); 
+    d_accuracy_duration(p,1) = sum(duration_data.correct_response(short_target_trials&d_oktrials) == "True")/size(duration_data(short_target_trials&d_oktrials,:),1);
+    d_accuracy_duration(p,2) = sum(duration_data.correct_response(long_target_trials&d_oktrials) == "True")/size(duration_data(long_target_trials&d_oktrials,:),1);
 
-    d_responses(p,:) = duration_data.response_time_in_ms;
-    d_responses(p, logical(1-d_oktrials)) = NaN; 
-    d_durations(p,:) = duration_data.target_duration;
-    d_durations(p, logical(1-d_oktrials)) = NaN;
+    %% basic data checks, each pp in own subplot
+    if plot_individuals
+        figure(fig_nr);
+        fig_nr = fig_nr+1;
+        subplot(subplot_size,subplot_size,p);
+        h = histogram(colour_data.reaction_time_in_ms,50);
+        title(['decision time - colour pp', num2str(pp2do(p))]);
+        ylim([0 200]);
 
-    d_long_responses(p,:) = duration_data.response_time_in_ms(duration_data.target_duration > 1199);
-    d_long_responses(p, logical(1-d_oktrials(duration_data.target_duration > 1199))) = NaN; 
-    d_long_durations(p,:) = duration_data.target_duration(duration_data.target_duration > 1199);
-    d_long_durations(p, logical(1-d_oktrials(duration_data.target_duration > 1199))) = NaN; 
+        figure(fig_nr);
+        fig_nr = fig_nr+1;
+        subplot(subplot_size,subplot_size,p);
+        h = histogram(duration_data.reaction_time_in_ms,50);
+        title(['decision time - duration pp', num2str(pp2do(p))]);
+        ylim([0 200]);
 
-    d_short_responses(p,:) = duration_data.response_time_in_ms(duration_data.target_duration < 801);
-    d_short_responses(p, logical(1-d_oktrials(duration_data.target_duration < 801))) = NaN; 
-    d_short_durations(p,:) = duration_data.target_duration(duration_data.target_duration < 801);
-    d_short_durations(p, logical(1-d_oktrials(duration_data.target_duration < 801))) = NaN; 
+        figure(fig_nr);
+        fig_nr = fig_nr+1;
+        subplot(subplot_size,subplot_size,p);
+        bar(c_accuracy);       
+        title(['colour accuracy - pp', num2str(pp2do(p))]);
+
+        
+        figure(fig_nr);
+        fig_nr = fig_nr+1;
+        subplot(subplot_size,subplot_size,p);
+        bar(d_accuracy);
+        title(['duration accuracy - pp', num2str(pp2do(p))]);
+    end
 
     %% get behavioural effect as function of target duration
     % bin stimulus durations
@@ -238,9 +163,8 @@ for pp = pp2do
         i = i + 1;
         trial_sel = colour_data.target_duration < target_duration+50 & colour_data.target_duration > target_duration-50;
 
-        c_dt_durations(p,i) = mean(colour_data.idle_reaction_time_in_ms(trial_sel&c_oktrials), "omitnan");
-        c_rt_durations(p,i) = mean(colour_data.response_time_in_ms(trial_sel&c_oktrials), "omitnan");
-        c_error_durations(p,i) = mean(colour_data.abs_rgb_distance(trial_sel&c_oktrials), "omitnan");
+        c_rt_durations(p,i) = mean(colour_data.reaction_time_in_ms(trial_sel&c_oktrials), "omitnan");
+        c_accuracy_durations(p,i) = sum(colour_data.correct_response(trial_sel&c_oktrials) == "True")/size(colour_data(trial_sel&c_oktrials,:),1);
     end
     
     % duration
@@ -249,10 +173,8 @@ for pp = pp2do
         i = i + 1;
         trial_sel = duration_data.target_duration < target_duration+50 & duration_data.target_duration > target_duration-50;
 
-        d_dt_durations(p,i) = mean(duration_data.idle_reaction_time_in_ms(trial_sel&d_oktrials), "omitnan");
-        d_rt_durations(p,i) = mean(duration_data.response_time_in_ms(trial_sel&d_oktrials), "omitnan");
-        d_rt_durations_err(p,i) = std(duration_data.response_time_in_ms(trial_sel&d_oktrials), "omitnan") ./ sum(d_oktrials);
-        d_error_durations(p,i) = mean(duration_data.duration_diff_abs(trial_sel&d_oktrials), "omitnan");
+        d_rt_durations(p,i) = mean(duration_data.reaction_time_in_ms(trial_sel&d_oktrials), "omitnan");
+        d_accuracy_durations(p,i) = sum(duration_data.correct_response(trial_sel&d_oktrials) == "True")/size(duration_data(trial_sel&d_oktrials,:),1);
     end
 end
 
@@ -260,50 +182,28 @@ if plot_averages
  %% check performance
     figure(fig_nr);
     fig_nr = fig_nr+1;
-    subplot(4,2,1);
-    bar(ppnum, c_overall_dt(:,1));
-    title('COLOUR overall decision time');
-    ylim([0,1000]);
-    xlabel('pp #');
-
-    subplot(4,2,3);
+    subplot(2,2,1);
     bar(ppnum, c_overall_rt(:,1));
-    title('overall response time');
-    ylim([0,4000]);
+    title('COLOUR overall reaction time');
+    ylim([0, 3000]);
     xlabel('pp #');
 
-    subplot(4,2,5);
-    bar(ppnum, c_overall_abs_error(:,1));
-    title('overall error');
-    xlabel('pp #');
-
-    subplot(4,2,7);
-    hold on
-    bar(ppnum, c_overall_error_signed(:,1));
-    title('overall signed error');
+    subplot(2,2,3);
+    bar(ppnum, c_accuracy(:,1));
+    title('overall accuracy');
+    ylim([0,1]);
     xlabel('pp #');
     
-    subplot(4,2,2);
-    bar(ppnum, d_overall_dt(:,1));
-    title('DURATION overall decision time');
-    ylim([0,1000]);
-    xlabel('pp #');
-
-    subplot(4,2,4);
+    subplot(2,2,2);
     bar(ppnum, d_overall_rt(:,1));
-    title('overall response time');
-    ylim([0,4000]);
+    title('DURATION overall reaction time');
+    ylim([0, 3000]);
     xlabel('pp #');
 
-    subplot(4,2,6);
-    bar(ppnum, d_overall_abs_error(:,1));
-    title('overall error');
-    xlabel('pp #');
-
-    subplot(4,2,8);
-    hold on
-    bar(ppnum, d_overall_error_signed(:,1));
-    title('overall abs error');
+    subplot(2,2,4);
+    bar(ppnum, d_accuracy(:,1));
+    title('overall accuracy');
+    ylim([0,1]);
     xlabel('pp #');
 
     %% effect of target duration on behaviour
@@ -313,107 +213,41 @@ if plot_averages
     subplot(2,2,1);
     hold on
     title('COLOUR - decision time');
-    bar(duration_labels, mean(c_dt_duration));
-    errorbar([1:2], [mean(c_dt_duration)], [std(c_dt_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
+    bar(duration_labels, mean(c_rt_duration));
+    errorbar([1:2], [mean(c_rt_duration)], [std(c_rt_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
 
     subplot(2,2,3);
     hold on
     title('COLOUR - error');
-    bar(duration_labels, mean(c_error_duration));
-    errorbar([1:2], [mean(c_error_duration)], [std(c_error_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
+    bar(duration_labels, mean(c_accuracy_duration));
+    errorbar([1:2], [mean(c_accuracy_duration)], [std(c_accuracy_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
 
     subplot(2,2,2);
     hold on
     title('DURATION - decision time');
-    bar(duration_labels, mean(d_dt_duration));
-    errorbar([1:2], [mean(d_dt_duration)], [std(d_dt_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
+    bar(duration_labels, mean(d_rt_duration));
+    errorbar([1:2], [mean(d_rt_duration)], [std(d_rt_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
 
     subplot(2,2,4);
     hold on
     title('DURATION - error');
-    bar(duration_labels, mean(d_error_duration));
-    errorbar([1:2], [mean(d_error_duration)], [std(d_error_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
-    
-    %% main confirmation that people do do duration task
-    figure(fig_nr);
-    fig_nr = fig_nr+1;
-    hold on
-    bar([1:2], mean(d_rt_duration));
-    plot([1:2], d_rt_duration);
-    errorbar([1:2], [mean(d_rt_duration)], [std(d_rt_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
-    xticks([1:2]);
-    xticklabels({"Short", "Long"});
-    xlabel("Item condition");
-    ylabel("Reproduction time (ms)");
+    bar(duration_labels, mean(d_accuracy_duration));
+    errorbar([1:2], [mean(d_accuracy_duration)], [std(d_accuracy_duration) ./ sqrt(size(pp2do,2))], 'LineStyle', 'none', 'Color', 'k');
 
-    %% check rt increase per bin per pp
-    figure(fig_nr);
-    fig_nr = fig_nr+1;
-    hold on
-    for p = size(pp2do,2)
-        plot(target_duration_bins, d_rt_durations');
-    end
-    legend;
-    xlabel('Duration - binned (ms)');
-    ylabel('Average responded duration (ms)');
-
-    %% check rt increase per bin overall
-    figure(fig_nr);
-    fig_nr = fig_nr+1;
-    hold on
-    plot(target_duration_bins, mean(d_rt_durations));
-    errorbar(target_duration_bins, mean(d_rt_durations), std(d_rt_durations), 'LineStyle', 'none');
-    plot([0:1800], [0:1800]);
-    xlim([0, 1800]);
-    ylim([0, 1800]);
-    xlabel('Duration - binned (ms)');
-    ylabel('Average responded duration (ms)');
-
-    %% investigate push-pull effect between the two items
-    figure(fig_nr);
-    fig_nr = fig_nr + 1;
-    hold on
-    frevede_errorbarplot(bin_centres, response_colour_diff_binned, 'k', 'se');
-    plot(xlim, [0,0], 'k--');
-    plot([0,0], ylim, 'k--');
-    xlabel('Signed distance of non-target from target (°)')
-    ylabel('Mean response error (°)');
-    xlim([bin_centres(1), bin_centres(end)]);
-    ylim([-15, 15]);
-
-    %% do regression stats per pp
-    % [~,~,~,~,stats] = regress(d_long_responses',[d_long_durations',ones(200,1)])
-    % [~,~,~,~,stats] = regress(d_long_responses',[d_long_durations',ones(400,1)])
-
-    %% responses per task: colour vs. duration
-    colour_errors = vertcat(c_errors_all{:});
-    duration_errors = vertcat(d_errors_all{:});
-
+    %% accuracy per task: colour vs. duration
     figure;
     subplot(1,2,1)
-    ksdensity(colour_errors)
-    xlim([-100, 100]);
-    ylim([0, 0.03]);
+    bar(mean(c_accuracy));
+    std(std(c_accuracy));
+    xlim([1, 2]);
+    ylim([0, 1]);
     title('Colour');
+
     subplot(1,2,2)
-    ksdensity(duration_errors)
-    xlim([-2000, 2000]);
-    ylim([0, 0.0015]);
+    bar(mean(d_accuracy));
+    std(std(d_accuracy));
+    xlim([1, 2]);
+    ylim([0, 1]);
     title('Duration');
-
-    figure;
-    ksdensity(duration_errors);
-
-    %% stats
-    mean(c_overall_abs_error)
-    std(c_overall_abs_error)
-    [h,p,ci,stats] = ttest(c_overall_abs_error, c_difference_between_both)
-    meanEffectSize(c_overall_abs_error, c_difference_between_both, effect="cohen")
-
-    mean(d_overall_abs_error)
-    std(d_overall_abs_error)
-    [h,p,ci,stats] = ttest(d_overall_abs_error, d_difference_between_both)
-    meanEffectSize(d_overall_abs_error, d_difference_between_both, effect="cohen")
-
 
 end
