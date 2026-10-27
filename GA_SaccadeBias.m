@@ -8,20 +8,19 @@ clear; clc; close all;
 oneOrTwoD       = 1;
 oneOrTwoD_options = {'_1D','_2D'};
 
-pp2do           = [2:25];
+pp2do           = [1];
 
 nsmooth         = 200;
-plotSinglePps   = 0;
-plotGAs         = 0;
-plotFigures     = 0;
+plotSinglePps   = 1;
+plotGAs         = 1;
+plotFigures     = 1;
 xlimtoplot      = [-100 1000];
 
-pp_start_colour   = logical([1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0]); 
-pp_start_duration = logical([0,1,0,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1]); 
+pp_start_colour   = logical([1]); 
+pp_start_duration = logical([0]); 
 
 %% visual parameters
-% todo
-subplot_size = 5;
+subplot_size = 1;
 
 %% load and aggregate the data from all pp
 s = 0;
@@ -87,8 +86,8 @@ if plotSinglePps
     figure;
     for sp = 1:s
         subplot(subplot_size,subplot_size,sp); hold on;
-        plot(saccade.time, squeeze(d1(sp,6,:)));
-        plot(saccade.time, squeeze(d2(sp,6,:)));
+        plot(saccade.time, squeeze(d1(sp,8,:)));
+        plot(saccade.time, squeeze(d2(sp,8,:)));
         plot(xlim, [0,0], '--k');
         xlim(xlimtoplot);
         ylim([-0.5 0.5]);
@@ -112,7 +111,7 @@ if plotSinglePps
     figure;
     for sp = 1:s
         subplot(subplot_size,subplot_size,sp); hold on;
-        plot(saccade.time, squeeze(d3(sp,6,:)));
+        plot(saccade.time, squeeze(d3(sp,8,:)));
         plot(xlim, [0,0], '--k');
         xlim(xlimtoplot);
         ylim([-0.5 0.5]);
@@ -125,7 +124,7 @@ if plotSinglePps
     for sp = 1:s
         subplot(subplot_size,subplot_size,sp); hold on;
         plot(saccade.time, squeeze(d3(sp,1,:)));
-        plot(saccade.time, squeeze(d3(sp,6,:)));
+        plot(saccade.time, squeeze(d3(sp,8,:)));
         plot(xlim, [0,0], '--k');
         xlim(xlimtoplot);
         ylim([-0.5 0.5]);
@@ -161,7 +160,7 @@ if plotSinglePps
         cfg.xlim = xlimtoplot;
         hold on;
         saccadesize.effect = squeeze(d6(sp,:,:,:)); % put in data from this pp
-        cfg.channel = 6; % all conditions combined.
+        cfg.channel = 8; % all conditions combined.
         ft_singleplotTFR(cfg, saccadesize);
         title(pp2do(sp));
         colormap('jet');
@@ -186,8 +185,8 @@ if plotGAs
     % plot toward, away and effect - all duration
     figure; 
     hold on
-    p3 = frevede_errorbarplot(saccade.time, squeeze(d1(:,6,:)), 'b', 'se');
-    p4 = frevede_errorbarplot(saccade.time, squeeze(d2(:,6,:)), 'r', 'se');
+    p3 = frevede_errorbarplot(saccade.time, squeeze(d1(:,8,:)), 'b', 'se');
+    p4 = frevede_errorbarplot(saccade.time, squeeze(d2(:,8,:)), 'r', 'se');
     legend([p3, p4], {'toward', 'away'});
     ylim([0, 0.8]);
     xlim(xlimtoplot);
@@ -200,7 +199,7 @@ if plotGAs
     figure;
     hold on
     p5 = frevede_errorbarplot(saccade.time, squeeze(d3(:,1,:)), 'b', 'se');
-    p6 = frevede_errorbarplot(saccade.time, squeeze(d3(:,6,:)), 'k', 'se');
+    p6 = frevede_errorbarplot(saccade.time, squeeze(d3(:,8,:)), 'k', 'se');
     xlim(xlimtoplot);
     plot(xlim, [0,0], '--', 'Color', [0.6, 0.6, 0.6]);
     plot([0,0], ylim, '--', 'Color', [0.6, 0.6, 0.6]);
@@ -215,7 +214,7 @@ if plotGAs
     subplot(1,2,1)
     hold on
     p5 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_colour(pp2do),1,:)), 'b', 'se');
-    p6 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_colour(pp2do),6,:)), 'k', 'se');
+    p6 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_colour(pp2do),8,:)), 'k', 'se');
     xlim(xlimtoplot);
     plot(xlim, [0,0], '--', 'Color', [0.6, 0.6, 0.6]);
     plot([0,0], ylim, '--', 'Color', [0.6, 0.6, 0.6]);
@@ -228,7 +227,7 @@ if plotGAs
     subplot(1,2,2)
     hold on
     p5 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_duration(pp2do),1,:)), 'b', 'se');
-    p6 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_duration(pp2do),6,:)), 'k', 'se');
+    p6 = frevede_errorbarplot(saccade.time, squeeze(d3(pp_start_duration(pp2do),8,:)), 'k', 'se');
     xlim(xlimtoplot);
     plot(xlim, [0,0], '--', 'Color', [0.6, 0.6, 0.6]);
     plot([0,0], ylim, '--', 'Color', [0.6, 0.6, 0.6]);
@@ -248,7 +247,7 @@ if plotGAs
 
     % per condition
     figure;
-    for chan = [1,6]
+    for chan = [1,8]
         c = c + 1;
         hold on
         cfg.channel = chan;
@@ -275,7 +274,7 @@ if plotFigures
     timeframe = [701:1701]; %this is 0 to 1500 ms post-cue
     
     colour_data = d3(:,1,timeframe);
-    duration_data = d3(:,6,timeframe);
+    duration_data = d3(:,8,timeframe);
     null_data = zeros(size(colour_data));
     
     stat_colour = frevede_ftclusterstat1D(statcfg, colour_data, null_data)
@@ -330,8 +329,8 @@ if plotFigures
 
     tM = subplot(2,3,2);
     hold on
-    p1 = frevede_errorbarplot(saccade.time, squeeze(d1(:,6,:)), get_colour("blue", ""), 'se');
-    p2 = frevede_errorbarplot(saccade.time, squeeze(d2(:,6,:)), get_colour("red", ""), 'se');
+    p1 = frevede_errorbarplot(saccade.time, squeeze(d1(:,8,:)), get_colour("blue", ""), 'se');
+    p2 = frevede_errorbarplot(saccade.time, squeeze(d2(:,8,:)), get_colour("red", ""), 'se');
     p1.LineWidth = line;
     p2.LineWidth = line;
     legend([p1, p2], {'toward', 'away'}, 'EdgeColor','none', 'AutoUpdate','off', 'FontSize', fontsize);
@@ -346,7 +345,7 @@ if plotFigures
     tR = subplot(2,3,3);
     hold on
     p1 = frevede_errorbarplot(saccade.time, squeeze(d3(:,1,:)), get_colour("pink", ""), 'se');
-    p2 = frevede_errorbarplot(saccade.time, squeeze(d3(:,6,:)), get_colour("green", ""), 'se');
+    p2 = frevede_errorbarplot(saccade.time, squeeze(d3(:,8,:)), get_colour("green", ""), 'se');
     p1.LineWidth = line;
     p2.LineWidth = line;
     legend([p1, p2], {'colour', 'duration'}, 'EdgeColor','none', 'AutoUpdate','off', 'FontSize', fontsize);
@@ -384,7 +383,7 @@ if plotFigures
 
     bM = subplot(2,3,5);
     hold on
-    cfg.channel = 6;
+    cfg.channel = 8;
     ft_singleplotTFR(cfg, saccadesize);
     % yline(6-4/2, 'LineWidth',2, 'Color',[107, 107, 107]/255, 'LineStyle','--');
     xline(0, 'LineWidth',2, 'Color',[107, 107, 107]/255, 'LineStyle','--');
@@ -422,6 +421,6 @@ if plotFigures
     
     set(gcf, 'Renderer', 'Painters');
 
-    print("..\..\..\..\Manuscripts\colour-vs.-duration\Figures\Saccade", "-dsvg", "-vector")
-    print("..\..\..\..\Manuscripts\colour-vs.-duration\Figures\Saccade", "-dpng")
+    % print("..\..\..\..\Manuscripts\colour-vs.-duration\Figures\Saccade", "-dsvg", "-vector")
+    % print("..\..\..\..\Manuscripts\colour-vs.-duration\Figures\Saccade", "-dpng")
 end

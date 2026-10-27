@@ -8,7 +8,7 @@ oneOrTwoD  = 1;
 oneOrTwoD_options = {'_1D','_2D'};
 
 %% loop over participants
-for pp = [1:25];
+for pp = [1];
 
     %% load epoched data of this participant data
     param = getSubjParam(pp);
@@ -47,16 +47,20 @@ for pp = [1:25];
     %% selection vectors for conditions -- this is where it starts to become interesting!
     % COLOUR
     % where was target item located (and therefore where does the cue "point")
-    c_cueL = ismember(tl_col.trialinfo(:,1), [31,32,33,34]);
-    c_cueR = ismember(tl_col.trialinfo(:,1), [35,36,37,38]);
+    c_cueL = ismember(tl_col.trialinfo(:,1), [31:38]);
+    c_cueR = ismember(tl_col.trialinfo(:,1), [39,310:316]);
       
     % which order was the cued item
-    c_targ1 = ismember(tl_col.trialinfo(:,1), [31,33,35,37]);
-    c_targ2 = ismember(tl_col.trialinfo(:,1), [32,34,36,38]);
+    c_targ1 = ismember(tl_col.trialinfo(:,1), [31,33,35,37,39,311,313,315]);
+    c_targ2 = ismember(tl_col.trialinfo(:,1), [32,34,36,38,310,312,314,316]);
     
     % which item was short or long
-    c_short_targ = ismember(tl_col.trialinfo(:,1), [31,32,35,36]);
-    c_long_targ = ismember(tl_col.trialinfo(:,1), [33,34,37,38]);
+    c_short_targ = ismember(tl_col.trialinfo(:,1), [31:34, 39,310:312]);
+    c_long_targ = ismember(tl_col.trialinfo(:,1), [35:38, 313:316]);
+
+    % congruency
+    c_congruent = ismember(tl_col.trialinfo(:,1), [31:32, 35:36, 39,310, 313:314]);
+    c_incongruent = ismember(tl_col.trialinfo(:,1), [33:34, 37:38, 311:312, 315:316]);
 
     % channels
     c_chX = ismember(tl_col.label, 'eyeX');
@@ -64,16 +68,20 @@ for pp = [1:25];
 
     % DURATION
     % where was target item located (and therefore where does the cue "point")
-    d_cueL = ismember(tl_dur.trialinfo(:,1), [39,310,311,312]);
-    d_cueR = ismember(tl_dur.trialinfo(:,1), [313,314,315,316]);
+    d_cueL = ismember(tl_dur.trialinfo(:,1), [317:324]);
+    d_cueR = ismember(tl_dur.trialinfo(:,1), [325:332]);
       
     % which order was the cued item
-    d_targ1 = ismember(tl_dur.trialinfo(:,1), [39,311,313,315]);
-    d_targ2 = ismember(tl_dur.trialinfo(:,1), [310,312,314,316]);
+    d_targ1 = ismember(tl_dur.trialinfo(:,1), [317,319,321,323,325,327,329,331]);
+    d_targ2 = ismember(tl_dur.trialinfo(:,1), [318,320,322,324,326,328,330,332]);
     
     % which item was short or long
-    d_short_targ = ismember(tl_dur.trialinfo(:,1), [39,310,313,314]);
-    d_long_targ = ismember(tl_dur.trialinfo(:,1), [311,312,315,316]);
+    d_short_targ = ismember(tl_dur.trialinfo(:,1), [317:320,325:328]);
+    d_long_targ = ismember(tl_dur.trialinfo(:,1), [321:324,329:332]);
+
+    % congruency
+    d_congruent = ismember(tl_dur.trialinfo(:,1), [317:318, 321:322, 325:326, 329:330]);
+    d_incongruent = ismember(tl_dur.trialinfo(:,1), [319:320, 323:324, 327:328, 331:332]);
 
     % channels
     d_chX = ismember(tl_dur.label, 'eyeX');
@@ -89,7 +97,6 @@ for pp = [1:25];
     data_input = squeeze(tl_dur.trial);
     time_input = tl_dur.time;
     [d_shiftsX, d_shiftsY, d_peakvelocity, d_times] = PBlab_gazepos2shift_2D(cfg, data_input(:,d_chX,:), data_input(:,d_chY,:), time_input);
-
 
     %% select usable gaze shifts
     minDisplacement = 0;
@@ -117,27 +124,31 @@ for pp = [1:25];
         throw('Times between the two different tasks are suddenly different!')
     end
     sel = ones(size(c_cueL)); %NB: selection of oktrials has happened at the start when remove_unfixated is "on".
-    saccade.label = {'colour_all', 'colour_targ1', 'colour_targ2', 'colour_short', 'colour_long', ...
-    'duration_all', 'duration_targ1', 'duration_targ2', 'duration_short', 'duration_long'};
+    saccade.label = {'colour_all', 'colour_targ1', 'colour_targ2', 'colour_short', 'colour_long', 'colour_congruent', 'colour_incongruent',...
+    'duration_all', 'duration_targ1', 'duration_targ2', 'duration_short', 'duration_long', 'duration_congruent', 'duration_incongruent'};
 
-    for selection = [1:5] % colour conditions
+    for selection = [1:7] % colour conditions
         if     selection == 1  sel = ones(size(c_cueL));
         elseif selection == 2  sel = c_targ1;
         elseif selection == 3  sel = c_targ2;
         elseif selection == 4  sel = c_short_targ;
         elseif selection == 5  sel = c_long_targ;
+        elseif selection == 6  sel = c_congruent;
+        elseif selection == 7  sel = c_incongruent;
         end
 
         saccade.toward(selection,:) =  (mean(c_shiftsL(c_cueL&sel,:)) + mean(c_shiftsR(c_cueR&sel,:))) ./ 2;
         saccade.away(selection,:)  =   (mean(c_shiftsL(c_cueR&sel,:)) + mean(c_shiftsR(c_cueL&sel,:))) ./ 2;
     end
-
-    for selection = [6:10] % duration conditions
-        if     selection == 6  sel = ones(size(d_cueL));
-        elseif selection == 7  sel = d_targ1;
-        elseif selection == 8  sel = d_targ2;
-        elseif selection == 9  sel = d_short_targ;
-        elseif selection == 10  sel = d_long_targ;
+    
+    for selection = [8:14] % duration conditions
+        if     selection == 8  sel = ones(size(d_cueL));
+        elseif selection == 9  sel = d_targ1;
+        elseif selection == 10  sel = d_targ2;
+        elseif selection == 11  sel = d_short_targ;
+        elseif selection == 12  sel = d_long_targ;
+        elseif selection == 13  sel = d_congruent;
+        elseif selection == 14  sel = d_incongruent;
         end
 
         saccade.toward(selection,:) =  (mean(d_shiftsL(d_cueL&sel,:)) + mean(d_shiftsR(d_cueR&sel,:))) ./ 2;
@@ -177,24 +188,28 @@ for pp = [1:25];
         d_shiftsL = d_shiftsX<-sz+halfbin & d_shiftsX > -sz-halfbin; % left shifts within this range
         d_shiftsR = d_shiftsX>sz-halfbin  & d_shiftsX < sz+halfbin; % right shifts within this range
 
-        for selection = [1:5] % colour conditions
+        for selection = [1:7] % colour conditions
             if     selection == 1  sel = ones(size(c_cueL));
             elseif selection == 2  sel = c_targ1;
             elseif selection == 3  sel = c_targ2;
             elseif selection == 4  sel = c_short_targ;
             elseif selection == 5  sel = c_long_targ;
+            elseif selection == 6  sel = c_congruent;
+            elseif selection == 7  sel = c_incongruent;
             end
 
             saccadesize.toward(selection,c,:) =  (mean(c_shiftsL(c_cueL&sel,:)) + mean(c_shiftsR(c_cueR&sel,:))) ./ 2;
             saccadesize.away(selection,c,:)  =   (mean(c_shiftsL(c_cueR&sel,:)) + mean(c_shiftsR(c_cueL&sel,:))) ./ 2;
         end
 
-        for selection = [6:10] % duration conditions
-            if     selection == 6  sel = ones(size(d_cueL));
-            elseif selection == 7  sel = d_targ1;
-            elseif selection == 8  sel = d_targ2;
-            elseif selection == 9  sel = d_short_targ;
-            elseif selection == 10  sel = d_long_targ;
+        for selection = [8:14] % duration conditions
+            if     selection == 8  sel = ones(size(d_cueL));
+            elseif selection == 9  sel = d_targ1;
+            elseif selection == 10  sel = d_targ2;
+            elseif selection == 11  sel = d_short_targ;
+            elseif selection == 12  sel = d_long_targ;
+            elseif selection == 13  sel = d_congruent;
+            elseif selection == 14  sel = d_incongruent;
             end
 
             saccadesize.toward(selection,c,:) =  (mean(d_shiftsL(d_cueL&sel,:)) + mean(d_shiftsR(d_cueR&sel,:))) ./ 2;

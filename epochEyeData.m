@@ -4,7 +4,7 @@
 clear; clc; close all;
 
 %% set loops
-for pp      = [20:25];
+for pp      = [1];
 
     %% Set trig labels and epoch timings
     prestim     = -0.75;
@@ -18,12 +18,12 @@ for pp      = [20:25];
 
         if task == 1
             task_type = 'colour';
-            values2use  = [31:38]; % cue onset
+            values2use  = [31:39, 310:316]; % cue onset
             task_ext = 'c';
             data = param.col_eye;
         elseif task == 2
             task_type = 'duration';
-            values2use  = [39,310:316]; % cue onset
+            values2use  = [317:332]; % cue onset
             task_ext = 'd';
             data = param.dur_eye;
         end
